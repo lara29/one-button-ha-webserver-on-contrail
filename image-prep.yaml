@@ -1,0 +1,133 @@
+---
+- name: Prepare the images
+  hosts: localhost
+  gather_facts: false
+  environment:
+    LIBGUESTFS_BACKEND: direct
+  
+  tasks:
+  - name: Install libguestfs tools
+    apt:
+      name: libguestfs-tools
+      state: present
+
+  - name: Install simplestreams
+    apt:
+      name: simplestreams
+      state: present
+
+  - name: Install jq
+    apt:
+      name: jq
+      state: present
+
+  - name: Workaround for Ubuntu Xenial (https://bugs.launchpad.net/ubuntu/+source/isc-dhcp/+bug/1650740)
+    shell: |
+      tar -xzf init.tar.gz
+    args:
+      executable: /bin/bash
+      chdir: /usr/lib/x86_64-linux-gnu/guestfs/supermin.d
+
+  - blockinfile:
+      path: /usr/lib/x86_64-linux-gnu/guestfs/supermin.d/init
+      content: |
+                touch /etc/fstab   # Workaround for Ubuntu.
+      insertafter: 'if test "$guestfs_network" = 1; then'
+
+  - shell: |
+      tar -czvf init.tar.gz init
+      rm init
+    args:
+      executable: /bin/bash
+      chdir: /usr/lib/x86_64-linux-gnu/guestfs/supermin.d
+
+  - name: Get the latest ubuntu xenial cloud image url
+    shell: |
+      sstream-query --json --max=1 --keyring=/usr/share/keyrings/ubuntu-cloudimage-keyring.gpg http://cloud-images.ubuntu.com/releases/streams/v1/com.ubuntu.cloud:released:download.sjson arch=amd64 release_codename='Xenial Xerus' ftype='disk1.img' | jq -r '.[].item_url'
+    register: result
+    args:
+      executable: /bin/bash
+
+  - set_fact:
+     url_path: "{{ result.stdout }}"
+
+  - debug:
+      var: url_path
+      verbosity: 2
+
+  - name: Fetch the Ubuntu xenial cloud image
+    get_url:
+      url: "{{ url_path }}"
+      dest: /root/ubuntu-image.img
+
+  - name: Check if ubuntu image exists
+    stat:
+      path: /root/ubuntu-image.img
+    register: sym
+
+  - debug:
+      msg: "Ubuntu cloud image not present"
+    when: sym.stat.exists == False
+  
+  - name: Check if secondary webserver first-boot file is present
+    stat:
+      path: /root/ws-sec-fb.sh
+    register: ws_sec_sym
+      
+  - debug:
+      msg: "Firstboot file for secondary web server is not present"
+    when: ws_sec_sym.stat.exists == "False"
+
+  - name: Check if secondary webserver image prep script is present
+    stat:
+      path: /root/create-ws-sec-image.sh
+    register: ws_sec_sym_prep
+
+  - debug:
+      msg: "Firstboot file for secondary web server is not present"
+    when: ws_sec_sym_prep.stat.exists == "False"
+
+  - name: Prepare Secondary Webserver image
+    script: /root/create-ws-sec-image.sh
+
+  - name: Check if primary webserver first-boot file is present
+    stat:
+      path: /root/ws-primary-fb.sh
+    register: ws_pri_sym
+
+  - debug:
+      msg: "Firstboot file for Primary web server is not present"
+    when: ws_pri_sym.stat.exists == "False"
+
+  - name: Check if Primary webserver image prep script is present
+    stat:
+      path: /root/create-ws-primary-image.sh
+    register: ws_pri_sym_prep
+
+  - debug:
+      msg: "Firstboot file for primary web server is not present"
+    when: ws_pri_sym_prep.stat.exists == "False"
+
+  - name: Prepare Primary Webserver image
+    script: /root/create-ws-primary-image.sh
+
+  - name: Check if DB Server first-boot file is present
+    stat:
+      path: /root/db-fb.sh
+    register: db_sym
+
+  - debug:
+      msg: "Firstboot file for DB server is not present"
+    when: db_sym.stat.exists == "False"
+
+  - name: Check if DB server image prep script is present
+    stat:
+      path: /root/create-db-image.sh
+    register: db_sym_prep
+
+  - debug:
+      msg: "Firstboot file for Db server is not present"
+    when: db_sym_prep.stat.exists == "False"
+
+  - name: Prepare DB Webserver image
+    script: /root/create-db-image.sh
