@@ -1,0 +1,75 @@
+{
+"cluster" : [
+    {
+        "id": "dc135",
+        "parameters" : {
+            "provision": {
+                "contrail_4": {
+                        "enable_lbaas": true,
+                        "kernel_upgrade": false
+                                 },
+                "openstack":{
+                    "openstack_manage_amqp": true,
+                    "keystone": {
+                           "admin_password": "contrail123"
+                    }
+                },
+                "kolla_globals": {
+                    "horizon_port": 8898,
+                    "enable_haproxy": "no",
+                    "kolla_base_distro": "ubuntu",
+                    "openstack_release": "4.0.0",
+                    "network_interface": "eno3"
+                }
+            }
+        }
+    }
+],
+"server": [
+    {
+        "cluster_id": "dc135",
+        "domain": "juniper.net",
+        "id": "ubuntu-xeni",
+        "parameters" : {
+            "partition": "/dev/vda"
+        },
+        "network" : {
+            "interfaces": [
+                {
+                    "name": "eno3",
+                    "dhcp": false,
+                    "mac_address": "14:18:77:45:c2:e9",
+                    "ip_address": "10.10.7.149/20",
+                    "default_gateway": "10.10.10.1"
+                }
+            ],
+            "management_interface": "eno3",
+            "provisioning": "kickstart"
+        },
+        "password": "c0ntrail123",
+        "roles": [
+                 "contrail-controller",
+                 "contrail-analytics",
+                 "contrail-analyticsdb",
+                 "openstack",
+                 "contrail-compute" ]
+    }
+],
+"image": [
+    {
+        "category": "package",
+        "id": "contrail_4_1",
+        "path": "/root/contrail-cloud-docker_4.1.0.0-8-ocata_xenial.tgz",
+        "type": "contrail-ubuntu-package",
+        "version": "4.1.0.0-8",
+        "parameters" : {
+                "provision": {
+                    "contrail": {
+                        "contrail_version": "4.1.0.0-8",
+                        "package_sku": "ocata"
+                    }
+                }
+            }
+    }
+]
+}
