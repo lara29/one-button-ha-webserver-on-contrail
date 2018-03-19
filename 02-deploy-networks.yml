@@ -5,18 +5,33 @@
 - name: install contrail
   hosts: contrail-ubuntu-vm
   gather_facts: false
+  vars:
+    openrc:
+      OS_PROJECT_DOMAIN_NAME: default
+      OS_USER_DOMAIN_NAME: default
+      OS_PROJECT_NAME: admin
+      OS_TENANT_NAME: admin
+      OS_USERNAME: admin
+      OS_PASSWORD: contrail123
+      OS_AUTH_URL: http://10.10.7.149:35357/v3
+      OS_INTERFACE: internal
+      OS_IDENTITY_API_VERSION: 3
+
+  environment: "{{ openrc }}"
   tasks:
 
     - name: Set necessary variables
       set_fact:
         os_auth:
-          auth_url: http://10.10.7.205:35357/v3
-          username: admin
-          password: contrail123
-          project_name: admin
-          os_tenant_name: admin
-          project_domain_name: default
-          user_domain_name: default
+          OS_AUTH_URL: http://10.10.7.205:35357/v3
+          OS_USERNAME: admin
+          OS_PASSWORD: contrail123
+          OS_PROJECT_NAME: admin
+          OS_TENANT_NAME: admin
+          OS_PROJECT_DOMAIN_NAME: default
+          OS_USER_DOMAIN_NAME: default
+          OS_IDENTITY_API_VERSION=3
+          OS_INTERFACE=internal
 
     - name: install shade 
       pip:
