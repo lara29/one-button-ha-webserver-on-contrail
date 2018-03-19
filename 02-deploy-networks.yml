@@ -1,0 +1,67 @@
+# Copyright 2018, Juniper Networks Pvt Ltd.
+# All rights reserved.
+# command example: ansible-playbook -i all.inv 02-deploy-networks.yml
+---
+- name: install contrail
+  hosts: contrail-ubuntu-vm
+  gather_facts: false
+  tasks:
+
+    - name: Set necessary variables
+      set_fact:
+        os_auth:
+          auth_url: http://10.10.7.205:35357/v3
+          username: admin
+          password: contrail123
+          project_name: admin
+          os_tenant_name: admin
+          project_domain_name: default
+          user_domain_name: default
+
+    - name: install shade 
+      pip:
+        name: shade
+
+    - name: Add heat_stack_owner role
+      os_user_role:
+        user: admin
+        role: heat_stack_owner
+        project: admin
+
+    - name: Install networks, subnet, and policy
+      os_stack:
+        name: deploy-networks
+        state: present
+        template: "/root/deploy-networks.yaml"
+
+    - name: Sleep five seconds
+      wait_for:
+        timeout:5
+ 
+    - name: Gather facts about previously created networks
+      shell: openstack --os-auth-url "http://10.10.7.205:35357/v3" --os-username admin --os-project-name admin --os-tenant-name admin --os-password "contrail123" --os-default-domain-name default network list -f json
+      register: network_list
+
+    - name: Display Networks
+      set_fact:
+        networks: "{{ network_list.stdout | from_json | json_query(jq)}}"
+      vars:
+        jq: "[?contains(Name,'_network')].{Name:Name,ID:ID,Subnets:Subnets}"
+    - debug:
+        msg:
+          - "{{networks}}"
+
+
+    - name: Gather facts about previously created subnets
+      shell: openstack --os-auth-url "http://10.10.7.205:35357/v3" --os-username admin --os-project-name admin --os-tenant-name admin --os-password "contrail123" --os-default-domain-name default subnet list -f json
+      register: network_list
+
+    - name: Display Networks
+      set_fact:
+        subnets: "{{ network_list.stdout | from_json | json_query(jq)}}"
+      vars:
+        jq: "[?contains(Name,'_subnet')].{ID:ID,Name:Name,Network:Network,Subnet:Subnet}"
+    - debug:
+        msg:
+          - "{{subnets}}"
+
