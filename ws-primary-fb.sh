@@ -38,8 +38,8 @@ DB_USER="wpuser"
 DB_PASS="password"
 DB_NAME="wordpress"
 DB_HOST=$db_ip
-DEST="lara-example.com"
-SITE_PATH=/var/www/html/lara-example.com/public_html/
+DEST="jnpr-example.com"
+SITE_PATH=/var/www/html/jnpr-example.com/public_html/
  
 sudo -u www-data -s -- <<EOF  
 echo 'Updating example.com...'  
