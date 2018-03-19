@@ -13,7 +13,7 @@
       OS_TENANT_NAME: admin
       OS_USERNAME: admin
       OS_PASSWORD: contrail123
-      OS_AUTH_URL: http://10.10.7.149:35357/v3
+      OS_AUTH_URL: http://10.10.7.203:35357/v3
       OS_INTERFACE: internal
       OS_IDENTITY_API_VERSION: 3
 
