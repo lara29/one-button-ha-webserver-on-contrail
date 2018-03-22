@@ -24,17 +24,7 @@
   - name: Workaround for Ubuntu Xenial (https://bugs.launchpad.net/ubuntu/+source/isc-dhcp/+bug/1650740)
     shell: |
       tar -xzf init.tar.gz
-    args:
-      executable: /bin/bash
-      chdir: /usr/lib/x86_64-linux-gnu/guestfs/supermin.d
-
-  - blockinfile:
-      path: /usr/lib/x86_64-linux-gnu/guestfs/supermin.d/init
-      content: |
-                touch /etc/fstab   # Workaround for Ubuntu.
-      insertafter: 'if test "$guestfs_network" = 1; then'
-
-  - shell: |
+      sed -i '/if test "$guestfs_network" = 1; then/a\ \ \ \ touch /etc/fstab' init
       tar -czvf init.tar.gz init
       rm init
     args:
@@ -71,7 +61,7 @@
   
   - name: Check if secondary webserver first-boot file is present
     stat:
-      path: /root/ws-sec-fb.sh
+      path: /root/secfb
     register: ws_sec_sym
       
   - debug:
@@ -92,7 +82,7 @@
 
   - name: Check if primary webserver first-boot file is present
     stat:
-      path: /root/ws-primary-fb.sh
+      path: /root/primaryfb
     register: ws_pri_sym
 
   - debug:
@@ -113,7 +103,7 @@
 
   - name: Check if DB Server first-boot file is present
     stat:
-      path: /root/db-fb.sh
+      path: /root/dbfb
     register: db_sym
 
   - debug:

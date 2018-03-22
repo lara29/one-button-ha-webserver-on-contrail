@@ -7,13 +7,16 @@ cp ubuntu-image.img ubuntu-primary.img
 virt-customize -a ubuntu-primary.img \
 --root-password password:juniper123 \
 --hostname ws-primary \
---firstboot ws-primary-fb.sh \
 --run-command 'echo "ubuntu ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/ubuntu' \
 --chmod 0440:/etc/sudoers.d/ubuntu \
+--copy-in primaryfb:/etc/network/if-up.d/ \
+--copy-in primaryfb:/root/ \
+--run-command 'chmod +x /etc/network/if-up.d/primaryfb' \
 --install apache2,tasksel,mysql-server,mysql-client,arp-scan,sshpass,expect \
 --install php7.0,libapache2-mod-php7.0,php7.0-mysql \
 --install php7.0-curl,php7.0-json,php7.0-cgi \
 --install php-curl,php-gd,php-mbstring,php-mcrypt,php-xml,php-xmlrpc \
+--run-command 'sed -i "s/PermitRootLogin prohibit-password/PermitRootLogin yes/g" /etc/ssh/sshd_config' \
 --run-command 'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config' \
 --run-command 'sed -i "/^KeepAlive/c\KeepAlive  On" /etc/apache2/apache2.conf' \
 --run-command 'sed -i "/^MaxKeepAliveRequests/c\MaxKeepAliveRequests  50" /etc/apache2/apache2.conf' \
@@ -25,6 +28,7 @@ virt-customize -a ubuntu-primary.img \
 --copy-in jnpr-example.com.conf:/etc/apache2/sites-available/ \
 --run-command 'sudo mkdir -p /var/www/html/jnpr-example.com/logs' \
 --run-command 'sudo mkdir -p /var/www/html/jnpr-example.com/public_html' \
+--copy-in phptest.php:/var/www/html/jnpr-example.com/public_html/ \
 --run-command 'a2ensite jnpr-example.com.conf' \
 --run-command 'a2dissite 000-default.conf' \
 --run-command 'systemctl reload apache2' \

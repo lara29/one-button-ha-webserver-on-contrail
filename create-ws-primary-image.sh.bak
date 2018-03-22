@@ -1,24 +1,21 @@
-#Make a copy of original ubuntu image to work upon
-cp ubuntu-image.img ubuntu-sec.img
+#!/bin/bash
 
-#set environment for libvirt
-export LIBGUESTFS_BACKEND=direct
+# Copy the original ubuntu image to primary image
+cp ubuntu-image.img ubuntu-primary.img
 
-#customize the webserver secondary image
-virt-customize -a ubuntu-sec.img \
+# Customize the image
+virt-customize -a ubuntu-primary.img \
 --root-password password:juniper123 \
---hostname ws-sec \
+--hostname ws-primary \
+--firstboot ws-primary-fb.sh \
 --run-command 'echo "ubuntu ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/ubuntu' \
 --chmod 0440:/etc/sudoers.d/ubuntu \
---copy-in secfb:/etc/network/if-up.d/ \
---copy-in secfb:/root/ \
---run-command 'chmod +x /etc/network/if-up.d/secfb' \
---install apache2,tasksel,mysql-server,mysql-client \
+--install apache2,tasksel,mysql-server,mysql-client,arp-scan,sshpass,expect \
 --install php7.0,libapache2-mod-php7.0,php7.0-mysql \
 --install php7.0-curl,php7.0-json,php7.0-cgi \
 --install php-curl,php-gd,php-mbstring,php-mcrypt,php-xml,php-xmlrpc \
+--run-command 'sed -i "s/PermitRootLogin prohibit-password/PermitRootLogin yes/g" /etc/ssh/sshd_config' \
 --run-command 'sed -i "s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config' \
---run-command 'sed -i "/^PermitRootLogin/c\PermitRootLogin  yes" /etc/ssh/sshd_config' \
 --run-command 'sed -i "/^KeepAlive/c\KeepAlive  On" /etc/apache2/apache2.conf' \
 --run-command 'sed -i "/^MaxKeepAliveRequests/c\MaxKeepAliveRequests  50" /etc/apache2/apache2.conf' \
 --run-command 'sed -i "/^KeepAliveTimeout/c\KeepAliveTimeout  5" /etc/apache2/apache2.conf' \
@@ -43,4 +40,14 @@ virt-customize -a ubuntu-sec.img \
 --run-command 'systemctl restart apache2' \
 --run-command 'mkdir /var/www/html/jnpr-example.com/src/' \
 --run-command 'chown -R www-data:www-data /var/www/html/jnpr-example.com/' \
---run-command 'chown -R www-data:www-data /var/www/html/jnpr-example.com/public_html'
+--run-command 'wget http://wordpress.org/latest.tar.gz' \
+--run-command 'tar -xvf latest.tar.gz' \
+--run-command 'mv wordpress/* /var/www/html/jnpr-example.com/public_html/' \
+--run-command 'chown -R www-data:www-data /var/www/html/jnpr-example.com/public_html' \
+--install lsyncd \
+--run-command 'sudo mkdir /etc/lsyncd' \
+--copy-in lsyncd.conf.lua:/etc/lsyncd/ \
+--run-command 'curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar' \
+--run-command 'php wp-cli.phar --info' \
+--run-command 'chmod +x wp-cli.phar' \
+--run-command 'sudo mv wp-cli.phar /usr/local/bin/wp'

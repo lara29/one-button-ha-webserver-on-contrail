@@ -1,0 +1,32 @@
+---
+- name: Deploy instances
+  hosts: localhost
+  gather_facts: false
+  vars:
+    openrc:
+      OS_PROJECT_DOMAIN_NAME: default
+      OS_USER_DOMAIN_NAME: default
+      OS_PROJECT_NAME: admin
+      OS_TENANT_NAME: admin
+      OS_USERNAME: admin
+      OS_PASSWORD: contrail123
+      OS_AUTH_URL: http://10.10.7.149:35357/v3
+      OS_INTERFACE: internal
+      OS_IDENTITY_API_VERSION: 3
+
+  environment: "{{ openrc }}"
+
+  tasks:
+  - name: Launch DB server
+    os_server:
+        name: dbserver
+        state: present
+        image: ubuntu
+        flavor: m1.tiny
+        network: db_network
+        userdata: |
+          #cloud-config
+          chpasswd:
+            list: |
+              password: juniper123
+            expire: False 
